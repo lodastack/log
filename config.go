@@ -6,7 +6,7 @@ import (
 )
 
 type LogConfig struct {
-	Type              string // syslog/stderr/std/file
+	Type              string // stderr/std/file
 	Level             string // DEBUG/INFO/WARNING/ERROR/FATAL
 	SyslogPriority    string // local0-7
 	SyslogSeverity    string
@@ -19,7 +19,6 @@ type LogConfig struct {
 }
 
 func initFromConfig(log *Logger,
-	sb *syslogBackend,
 	fb *FileBackend,
 	config LogConfig) error {
 
@@ -30,12 +29,7 @@ func initFromConfig(log *Logger,
 	}
 
 	var err error
-	if config.Type == "syslog" {
-		if sb, err = NewSyslogBackend(config.SyslogPriority, config.SyslogSeverity); err != nil {
-			return err
-		}
-		log.SetLogging(config.Level, sb)
-	} else if config.Type == "file" {
+	if config.Type == "file" {
 		if fb, err = NewFileBackend(config.FileName); err != nil {
 			return err
 		}
@@ -51,13 +45,12 @@ func initFromConfig(log *Logger,
 }
 
 func Init(config LogConfig) error {
-	return initFromConfig(&logging, sysback, fileback, config)
+	return initFromConfig(&logging, fileback, config)
 }
 
 func NewLoggerFromConfig(config LogConfig) (Logger, error) {
 	var log Logger
 	var fb *FileBackend = nil
-	var sb *syslogBackend = nil
-	err := initFromConfig(&log, sb, fb, config)
+	err := initFromConfig(&log, fb, config)
 	return log, err
 }

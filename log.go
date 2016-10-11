@@ -37,49 +37,14 @@ type Backend interface {
 	close()
 }
 
-type stdBackend struct{}
-
-func (self *stdBackend) Log(s Severity, msg []byte) {
-	os.Stdout.Write(msg)
-}
-
-func (self *stdBackend) close() {}
-
-type Logger struct {
-	s       Severity
-	backend Backend
-	mu      sync.Mutex
-
-	freeList   *buffer
-	freeListMu sync.Mutex
-
-	logToStderr bool
-}
-
-//resued buffer for fast format the output string
+// reuse buffer for fast format the output string
 type buffer struct {
 	bytes.Buffer
 	tmp  [64]byte
 	next *buffer
 }
 
-func (self *Logger) getBuffer() *buffer {
-	self.freeListMu.Lock()
-	b := self.freeList
-	if b != nil {
-		self.freeList = b.next
-	}
-	self.freeListMu.Unlock()
-	if b == nil {
-		b = new(buffer)
-	} else {
-		b.next = nil
-		b.Reset()
-	}
-	return b
-}
-
-// Some custom tiny helper functions to print the log header efficiently.
+// some custom tiny helper functions to print the log header efficiently.
 const digits = "0123456789"
 
 // twoDigits formats a zero-prefixed two-digit integer at buf.tmp[i].
@@ -117,6 +82,33 @@ func (buf *buffer) someDigits(i, d int) int {
 		}
 	}
 	return copy(buf.tmp[i:], buf.tmp[j:])
+}
+
+type Logger struct {
+	s       Severity
+	backend Backend
+	mu      sync.Mutex
+
+	freeList   *buffer
+	freeListMu sync.Mutex
+
+	logToStderr bool
+}
+
+func (self *Logger) getBuffer() *buffer {
+	self.freeListMu.Lock()
+	b := self.freeList
+	if b != nil {
+		self.freeList = b.next
+	}
+	self.freeListMu.Unlock()
+	if b == nil {
+		b = new(buffer)
+	} else {
+		b.next = nil
+		b.Reset()
+	}
+	return b
 }
 
 func (self *Logger) putBuffer(b *buffer) {
@@ -345,21 +337,16 @@ func (l *Logger) SetLogging(level interface{}, backend Backend) {
 	l.backend = backend
 }
 
-/////////////////////////////////////////////////////////////////
-// depth version, only a low level api
-func (l *Logger) LogDepth(s Severity, depth int, format string, args ...interface{}) {
-	l.printfDepth(s, depth+1, format, args...)
-}
-
-func (l *Logger) PrintfSimple(format string, args ...interface{}) {
-	l.printfSimple(format, args...)
-}
-
-/*---------------------------------------------------------------------------*/
-
 var logging Logger
 var fileback *FileBackend = nil
-var sysback *syslogBackend = nil
+
+type stdBackend struct{}
+
+func (self *stdBackend) Log(s Severity, msg []byte) {
+	os.Stdout.Write(msg)
+}
+
+func (self *stdBackend) close() {}
 
 func init() {
 	SetLogging(DEBUG, &stdBackend{})
@@ -380,8 +367,6 @@ func Close() {
 func LogToStderr() {
 	logging.LogToStderr()
 }
-
-/*-----------------------------public functions------------------------------*/
 
 func Debug(args ...interface{}) {
 	logging.print(DEBUG, args...)
