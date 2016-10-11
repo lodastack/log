@@ -15,9 +15,7 @@ type LogConfig struct {
 	FileFlushDuration time.Duration
 }
 
-func initFromConfig(log *Logger,
-	fb *FileBackend,
-	config LogConfig) error {
+func initFromConfig(log *Logger, fb *FileBackend, config LogConfig) error {
 	log.prefix = config.Prefix
 	if config.Type == "stderr" || config.Type == "std" {
 		log.LogToStderr()
@@ -30,12 +28,14 @@ func initFromConfig(log *Logger,
 		if fb, err = NewFileBackend(config.FileName); err != nil {
 			return err
 		}
+
 		log.SetLogging(config.Level, fb)
 		fb.Rotate(config.FileRotateCount, config.FileRotateSize)
 		fb.SetFlushDuration(config.FileFlushDuration)
 	} else {
 		return fmt.Errorf("unknown log type: %s", config.Type)
 	}
+
 	return nil
 }
 

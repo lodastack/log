@@ -150,12 +150,13 @@ func (self *Logger) formatHeader(s Severity, file string, line int) *buffer {
 	buf.nDigits(6, 20, now.Nanosecond()/1000, '0')
 	buf.tmp[26] = ' '
 	buf.Write(buf.tmp[:27])
-	buf.WriteString(severityName[s])
 	if self.prefix != "" {
 		buf.WriteByte('[')
 		buf.WriteString(self.prefix)
 		buf.WriteByte(']')
+		buf.WriteByte(' ')
 	}
+	buf.WriteString(severityName[s])
 	buf.WriteByte(' ')
 	buf.WriteString(file)
 	buf.tmp[0] = ':'
