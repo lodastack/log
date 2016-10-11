@@ -300,6 +300,14 @@ func (l *Logger) Debugf(format string, args ...interface{}) {
 	l.printf(DEBUG, format, args...)
 }
 
+func (l *Logger) Printf(format string, args ...interface{}) {
+	l.printf(INFO, format, args...)
+}
+
+func (l *Logger) Println(args ...interface{}) {
+	l.print(INFO, args...)
+}
+
 func (l *Logger) Info(args ...interface{}) {
 	l.print(INFO, args...)
 }
@@ -383,6 +391,14 @@ func Debugf(format string, args ...interface{}) {
 	logging.printf(DEBUG, format, args...)
 }
 
+func Printf(format string, args ...interface{}) {
+	logging.printf(INFO, format, args...)
+}
+
+func Println(args ...interface{}) {
+	logging.print(INFO, args...)
+}
+
 func Info(args ...interface{}) {
 	logging.print(INFO, args...)
 }
@@ -417,10 +433,6 @@ func Fatalf(format string, args ...interface{}) {
 
 func LogDepth(s Severity, depth int, format string, args ...interface{}) {
 	logging.printfDepth(s, depth+1, format, args...)
-}
-
-func Printf(format string, args ...interface{}) {
-	logging.printfSimple(format, args...)
 }
 
 func GetLogger() *Logger {
