@@ -3,13 +3,8 @@ package log
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
-	"regexp"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -17,10 +12,6 @@ import (
 const (
 	bufferSize = 256 * 1024
 )
-
-func getLastCheck(now time.Time) uint64 {
-	return uint64(now.Year())*1000000 + uint64(now.Month())*10000 + uint64(now.Day())*100 + uint64(now.Hour())
-}
 
 type syncBuffer struct {
 	*bufio.Writer
@@ -42,7 +33,7 @@ func (self *syncBuffer) close() {
 }
 
 func (self *syncBuffer) write(b []byte) {
-	if !self.parent.rotateByHour && self.parent.maxSize > 0 && self.parent.rotateNum > 0 && self.count+uint64(len(b)) >= self.parent.maxSize {
+	if self.parent.maxSize > 0 && self.parent.rotateNum > 0 && self.count+uint64(len(b)) >= self.parent.maxSize {
 		os.Rename(self.filePath, self.filePath+fmt.Sprintf(".%03d", self.cur))
 		self.cur++
 		if self.cur >= self.parent.rotateNum {
@@ -62,10 +53,6 @@ type FileBackend struct {
 	rotateNum     int
 	maxSize       uint64
 	fall          bool
-	rotateByHour  bool
-	lastCheck     uint64
-	reg           *regexp.Regexp // for rotatebyhour log del...
-	keepHours     uint           // keep how many hours old, only make sense when rotatebyhour is T
 }
 
 func (self *FileBackend) Flush() {
@@ -75,7 +62,6 @@ func (self *FileBackend) Flush() {
 		self.files[i].Flush()
 		self.files[i].Sync()
 	}
-
 }
 
 func (self *FileBackend) close() {
@@ -86,51 +72,6 @@ func (self *FileBackend) flushDaemon() {
 	for {
 		time.Sleep(self.flushInterval)
 		self.Flush()
-	}
-}
-
-func shouldDel(fileName string, left uint) bool {
-	// tag should be like 2016071114
-	tagInt, err := strconv.Atoi(strings.Split(fileName, ".")[2])
-	if err != nil {
-		return false
-	}
-
-	point := time.Now().Unix() - int64(left*3600)
-
-	if getLastCheck(time.Unix(point, 0)) > uint64(tagInt) {
-		return true
-	}
-
-	return false
-
-}
-
-func (self *FileBackend) rotateByHourDaemon() {
-	for {
-		time.Sleep(time.Second * 1)
-
-		if self.rotateByHour {
-			check := getLastCheck(time.Now())
-			if self.lastCheck < check {
-				for i := 0; i < numSeverity; i++ {
-					os.Rename(self.files[i].filePath, self.files[i].filePath+fmt.Sprintf(".%d", self.lastCheck))
-				}
-				self.lastCheck = check
-			}
-
-			// also check log dir to del overtime files
-			files, err := ioutil.ReadDir(self.dir)
-			if err == nil {
-				for _, file := range files {
-					// exactly match, then we
-					if file.Name() == self.reg.FindString(file.Name()) &&
-						shouldDel(file.Name(), self.keepHours) {
-						os.Remove(filepath.Join(self.dir, file.Name()))
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -209,16 +150,10 @@ func NewFileBackend(dir string) (*FileBackend, error) {
 	fb.flushInterval = time.Second * 3
 	fb.rotateNum = 20
 	fb.maxSize = 1024 * 1024 * 1024
-	fb.rotateByHour = false
-	fb.lastCheck = 0
-	// init reg to match files
-	// ONLY cover this centry...
-	fb.reg = regexp.MustCompile("(INFO|ERROR|WARNING|DEBUG|FATAL)\\.log\\.20[0-9]{8}")
-	fb.keepHours = 24 * 7
+	fb.fall = false
 
 	go fb.flushDaemon()
 	go fb.monitorFiles()
-	go fb.rotateByHourDaemon()
 	return &fb, nil
 }
 
@@ -238,5 +173,4 @@ func SetFlushDuration(t time.Duration) {
 	if fileback != nil {
 		fileback.SetFlushDuration(t)
 	}
-
 }
