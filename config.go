@@ -8,20 +8,17 @@ import (
 type LogConfig struct {
 	Type              string // stderr/std/file
 	Level             string // DEBUG/INFO/WARNING/ERROR/FATAL
-	SyslogPriority    string // local0-7
-	SyslogSeverity    string
 	FileName          string
+	Prefix            string
 	FileRotateCount   int
 	FileRotateSize    uint64
 	FileFlushDuration time.Duration
-	RotateByHour      bool
-	KeepHours         uint // make sense when RotateByHour is T
 }
 
 func initFromConfig(log *Logger,
 	fb *FileBackend,
 	config LogConfig) error {
-
+	log.prefix = config.Prefix
 	if config.Type == "stderr" || config.Type == "std" {
 		log.LogToStderr()
 		log.SetSeverity(config.Level)
@@ -36,8 +33,6 @@ func initFromConfig(log *Logger,
 		log.SetLogging(config.Level, fb)
 		fb.Rotate(config.FileRotateCount, config.FileRotateSize)
 		fb.SetFlushDuration(config.FileFlushDuration)
-		fb.SetRotateByHour(config.RotateByHour)
-		fb.SetKeepHours(config.KeepHours)
 	} else {
 		return fmt.Errorf("unknown log type: %s", config.Type)
 	}
