@@ -179,19 +179,6 @@ func (self *FileBackend) Rotate(rotateNum1 int, maxSize1 uint64) {
 	self.maxSize = maxSize1
 }
 
-func (self *FileBackend) SetRotateByHour(rotateByHour bool) {
-	self.rotateByHour = rotateByHour
-	if self.rotateByHour {
-		self.lastCheck = getLastCheck(time.Now())
-	} else {
-		self.lastCheck = 0
-	}
-}
-
-func (self *FileBackend) SetKeepHours(hours uint) {
-	self.keepHours = hours
-}
-
 func (self *FileBackend) Fall() {
 	self.fall = true
 }
@@ -203,6 +190,7 @@ func (self *FileBackend) SetFlushDuration(t time.Duration) {
 		self.flushInterval = time.Second
 	}
 }
+
 func NewFileBackend(dir string) (*FileBackend, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
@@ -251,16 +239,4 @@ func SetFlushDuration(t time.Duration) {
 		fileback.SetFlushDuration(t)
 	}
 
-}
-
-func SetRotateByHour(rotateByHour bool) {
-	if fileback != nil {
-		fileback.SetRotateByHour(rotateByHour)
-	}
-}
-
-func SetKeepHours(hours uint) {
-	if fileback != nil {
-		fileback.SetKeepHours(hours)
-	}
 }

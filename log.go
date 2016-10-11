@@ -92,6 +92,7 @@ type Logger struct {
 	freeList   *buffer
 	freeListMu sync.Mutex
 
+	prefix      string
 	logToStderr bool
 }
 
@@ -150,6 +151,11 @@ func (self *Logger) formatHeader(s Severity, file string, line int) *buffer {
 	buf.tmp[26] = ' '
 	buf.Write(buf.tmp[:27])
 	buf.WriteString(severityName[s])
+	if self.prefix != "" {
+		buf.WriteByte('[')
+		buf.WriteString(self.prefix)
+		buf.WriteByte(']')
+	}
 	buf.WriteByte(' ')
 	buf.WriteString(file)
 	buf.tmp[0] = ':'
@@ -253,10 +259,11 @@ func stacks(all bool) []byte {
 
 /*--------------------------logger public functions--------------------------*/
 
-func NewLogger(level interface{}, backend Backend) *Logger {
+func NewLogger(level interface{}, prefix string, backend Backend) *Logger {
 	l := new(Logger)
 	l.SetSeverity(level)
 	l.backend = backend
+	l.prefix = prefix
 	return l
 }
 
