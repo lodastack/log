@@ -345,6 +345,11 @@ func (l *Logger) SetLogging(level interface{}, backend Backend) {
 	l.backend = backend
 }
 
+// SetPrefix sets the prefix flags for the logger.
+func (l *Logger) SetPrefix(prefix string) {
+	l.prefix = prefix
+}
+
 var logging Logger
 var fileback *FileBackend = nil
 
@@ -366,6 +371,11 @@ func SetLogging(level interface{}, backend Backend) {
 
 func SetSeverity(level interface{}) {
 	logging.SetSeverity(level)
+}
+
+// SetPrefix sets the prefix flags for the logger.
+func SetPrefix(prefix string) {
+	logging.SetPrefix(prefix)
 }
 
 func Close() {
@@ -428,6 +438,12 @@ func LogDepth(s Severity, depth int, format string, args ...interface{}) {
 	logging.printfDepth(s, depth+1, format, args...)
 }
 
+// GetLogger returns the global logger.
 func GetLogger() *Logger {
 	return &logging
+}
+
+// GetFileBackend returns the global file backend.
+func GetFileBackend() *FileBackend {
+	return fileback
 }
