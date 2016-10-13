@@ -260,7 +260,7 @@ func stacks(all bool) []byte {
 
 /*--------------------------logger public functions--------------------------*/
 
-func NewLogger(level interface{}, prefix string, backend Backend) *Logger {
+func New(level interface{}, prefix string, backend Backend) *Logger {
 	l := new(Logger)
 	l.SetSeverity(level)
 	l.backend = backend
