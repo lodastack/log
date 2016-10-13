@@ -260,7 +260,7 @@ func stacks(all bool) []byte {
 
 /*--------------------------logger public functions--------------------------*/
 
-func NewLogger(level interface{}, prefix string, backend Backend) *Logger {
+func New(level interface{}, prefix string, backend Backend) *Logger {
 	l := new(Logger)
 	l.SetSeverity(level)
 	l.backend = backend
@@ -438,12 +438,12 @@ func LogDepth(s Severity, depth int, format string, args ...interface{}) {
 	logging.printfDepth(s, depth+1, format, args...)
 }
 
-// GetLogger returns the global logger.
-func GetLogger() *Logger {
+// Logger returns the global logger.
+func Logger() *Logger {
 	return &logging
 }
 
-// GetFileBackend returns the global file backend.
-func GetFileBackend() *FileBackend {
+// FileBackend returns the global file backend.
+func FileBackend() *FileBackend {
 	return fileback
 }
