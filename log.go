@@ -233,8 +233,7 @@ func (self *Logger) output(s Severity, buf *buffer) {
 		self.backend.Log(s, buf.Bytes())
 	}
 	if s == FATAL {
-		trace := stacks(true)
-		os.Stderr.Write(trace)
+		self.backend.Log(s, buf.Bytes())
 		os.Exit(255)
 	}
 	self.putBuffer(buf)
